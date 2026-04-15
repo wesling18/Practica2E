@@ -5,6 +5,7 @@ import { supabase } from "../database/supabaseconfig";
 import ModalRegistroCategoria from "../components/categorias/ModalResgistroCategoria";
 import NotificacionOperacion from "../components/NotificacionOperaciones";
 import TablaCategorias from "../components/categorias/TablaCategorias";
+import TarjetaCategoria from "../components/categorias/TargetaCategoria";
 
 const Categorias = () => {
   const [toast, setToast] = useState({ mostrar: false, mensaje: "", tipo: "" });
@@ -120,13 +121,9 @@ const Categorias = () => {
         tipo: "exito",
       });
 
-      // Limpiar formulario y cerrar modal
       setNuevaCategoria({ nombre_categoria: "", descripcion_categoria: "" });
       setMostrarModal(false);
-      
-      // Invocando el método de carga al limpiar el formulario o cerrar el modal
       await cargarCategorias();
-      
     } catch (err) {
       console.error("Excepción al agregar categoría:", err.message);
       setToast({
@@ -156,18 +153,38 @@ const Categorias = () => {
 
       <hr />
 
-      {/* Tabla de Categorías */}
+      {/* Spinner mientras se cargan las categorías */}
       {cargando ? (
-        <div className="text-center p-5">
-          <Spinner animation="border" variant="success" size="lg" />
-          <p className="mt-3 text-muted">Cargando categorías...</p>
-        </div>
+        <Row className="text-center my-5">
+          <Col>
+            <Spinner animation="border" variant="success" size="lg" />
+            <p className="mt-3 text-muted">Cargando categorías...</p>
+          </Col>
+        </Row>
       ) : (
-        <TablaCategorias
-          categorias={categorias}
-          abrirModalEdicion={abrirModalEdicion}
-          abrirModalEliminacion={abrirModalEliminacion}
-        />
+        <>
+          {/* Vista móvil/tablet: Tarjetas */}
+          <Row className="d-lg-none">
+            <Col xs={12}>
+              <TarjetaCategoria
+                categorias={categorias}
+                abrirModalEdicion={abrirModalEdicion}
+                abrirModalEliminacion={abrirModalEliminacion}
+              />
+            </Col>
+          </Row>
+
+          {/* Vista escritorio: Tabla */}
+          <Row className="d-none d-lg-block">
+            <Col lg={12}>
+              <TablaCategorias
+                categorias={categorias}
+                abrirModalEdicion={abrirModalEdicion}
+                abrirModalEliminacion={abrirModalEliminacion}
+              />
+            </Col>
+          </Row>
+        </>
       )}
 
       {/* Modal de Registro */}
