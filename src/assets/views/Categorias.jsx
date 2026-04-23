@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Button, Spinner, Alert, Pagination } from "react-bootstrap";
 import { supabase } from "../database/supabaseconfig";
 
 import ModalRegistroCategoria from "../components/categorias/ModalResgistroCategoria";
@@ -8,6 +8,9 @@ import TablaCategorias from "../components/categorias/TablaCategorias";
 import TarjetaCategoria from "../components/categorias/TargetaCategoria";
 import ModalEdicionCategoria from "../components/categorias/ModalEdicionCategoria";
 import ModalEliminacionCategoria from "../components/categorias/ModalEliminacionCategoria";
+import CuadroBusquedas from "../components/busquedas/cuadroBusquedas";
+import Paginacion from "../components/ordenamiento/Paginacion";
+
 
 
 const Categorias = () => {
@@ -15,6 +18,13 @@ const Categorias = () => {
   const [mostrarModal, setMostrarModal] = useState(false);
 
   const [categorias, setCategorias] = useState([]);
+  const [textoBusqueda, setTextoBusqueda] = useState("");
+  const [categoriasFiltradas, setCategoriasFiltradas] = useState([]);
+  
+  // Estados para la paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [itemsPorPagina, setItemsPorPagina] = useState(5);
+  
   const [cargando, setCargando] = useState(true);
   const [mostrarModalEliminacion, setMostrarModalEliminacion] = useState(false);
   const [categoriaAEliminar, setCategoriaAEliminar] = useState(null);
@@ -86,6 +96,34 @@ const Categorias = () => {
       [name]: value,
     }));
   };
+
+  const manejarBusqueda = (e) => {
+    setTextoBusqueda(e.target.value);
+  };
+
+  useEffect(() => {
+    if (!textoBusqueda.trim()) {
+      setCategoriasFiltradas(categorias);
+    } else {
+      const textoLower = textoBusqueda.toLowerCase().trim();
+      const filtradas = categorias.filter(
+        (cat) =>
+          cat.nombre_categoria.toLowerCase().includes(textoLower) ||
+          (cat.descripcion_categoria &&
+            cat.descripcion_categoria.toLowerCase().includes(textoLower))
+      );
+      setCategoriasFiltradas(filtradas);
+      setPaginaActual(1); // Reiniciar a la primera página al buscar
+    }
+  }, [textoBusqueda, categorias]);
+
+  // Lógica de paginación
+  const indiceUltimoItem = paginaActual * itemsPorPagina;
+  const indicePrimerItem = indiceUltimoItem - itemsPorPagina;
+  const categoriasPaginadas = categoriasFiltradas.slice(indicePrimerItem, indiceUltimoItem);
+  const totalPaginas = Math.ceil(categoriasFiltradas.length / itemsPorPagina);
+
+  const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   const agregarCategoria = async () => {
     try {
@@ -199,40 +237,40 @@ const actualizarCategoria = async () => {
 
 
 const eliminarCategoria = async () => {
-  if (!categoriaAEliminar) return;
-  try {
-    setMostrarModalEliminacion(false);
+    if (!categoriaAEliminar) return;
+    try {
+      setMostrarModalEliminacion(false);
 
-    const { error } = await supabase
-      .from("categorias")
-      .delete()
-      .eq("id_categoria", categoriaAEliminar.id_categoria);
+      const { error } = await supabase
+        .from("categorias")
+        .delete()
+        .eq("id_categoria", categoriaAEliminar.id_categoria);
 
-    if (error) {
-      console.error("Error al eliminar categoría:", error.message);
+      if (error) {
+        console.error("Error al eliminar categoría:", error.message);
+        setToast({
+          mostrar: true,
+          mensaje: `Error al eliminar la categoría ${categoriaAEliminar.nombre_categoria}.`,
+          tipo: "error",
+        });
+        return;
+      }
+
+      await cargarCategorias();
       setToast({
         mostrar: true,
-        mensaje: `Error al eliminar la categoría ${categoriaAEliminar.nombre_categoria}.`,
+        mensaje: `Categoría ${categoriaAEliminar.nombre_categoria} eliminada exitosamente.`,
+        tipo: "exito",
+      });
+    } catch (err) {
+      setToast({
+        mostrar: true,
+        mensaje: "Error inesperado al eliminar categoría.",
         tipo: "error",
       });
-      return;
+      console.error("Excepción al eliminar categoría:", err.message);
     }
-
-    await cargarCategorias();
-    setToast({
-      mostrar: true,
-      mensaje: `Categoría ${categoriaAEliminar.nombre_categoria} eliminada exitosamente.`,
-      tipo: "exito",
-    });
-  } catch (err) {
-    setToast({
-      mostrar: true,
-      mensaje: "Error inesperado al eliminar categoría.",
-      tipo: "error",
-    });
-    console.error("Excepción al eliminar categoría:", err.message);
-  }
-};
+  };
 
   return (
     <Container className="mt-3">
@@ -253,38 +291,95 @@ const eliminarCategoria = async () => {
 
       <hr />
 
+      {/* Cuadro de búsqueda debajo de la línea divisoria */}
+      <Row className="mb-4">
+        <Col md={6} lg={5}>
+          <CuadroBusquedas
+            textoBusqueda={textoBusqueda}
+            manejarCambioBusqueda={manejarBusqueda}
+            placeholder="Buscar por nombre o descripción..."
+          />
+        </Col>
+      </Row>
+
+      {/* Mensaje de no coincidencias solo cuando hay búsqueda y no hay resultados */}
+      {!cargando && textoBusqueda.trim() && categoriasFiltradas.length === 0 && (
+        <Row className="mb-4">
+          <Col>
+            <Alert variant="info" className="text-center">
+              <i className="bi bi-info-circle me-2"></i>
+              No se encontraron categorías que coincidan con "{textoBusqueda}".
+            </Alert>
+          </Col>
+        </Row>
+      )}
+
+      {/* Paginación */}
+      {!cargando && totalPaginas > 1 && (
+        <Row className="mt-3">
+          <Col className="d-flex justify-content-center">
+            <Pagination>
+              <Pagination.First onClick={() => cambiarPagina(1)} disabled={paginaActual === 1} />
+              <Pagination.Prev onClick={() => cambiarPagina(paginaActual - 1)} disabled={paginaActual === 1} />
+              {[...Array(totalPaginas)].map((_, index) => (
+                <Pagination.Item
+                  key={index + 1}
+                  active={index + 1 === paginaActual}
+                  onClick={() => cambiarPagina(index + 1)}
+                >
+                  {index + 1}
+                </Pagination.Item>
+              ))}
+              <Pagination.Next onClick={() => cambiarPagina(paginaActual + 1)} disabled={paginaActual === totalPaginas} />
+              <Pagination.Last onClick={() => cambiarPagina(totalPaginas)} disabled={paginaActual === totalPaginas} />
+            </Pagination>
+          </Col>
+        </Row>
+      )}
+
       {/* Spinner mientras se cargan las categorías */}
-      {cargando ? (
+      {cargando && (
         <Row className="text-center my-5">
           <Col>
             <Spinner animation="border" variant="success" size="lg" />
             <p className="mt-3 text-muted">Cargando categorías...</p>
           </Col>
         </Row>
-      ) : (
-        <>
-          {/* Vista móvil/tablet: Tarjetas */}
-          <Row className="d-lg-none">
-            <Col xs={12}>
-              <TarjetaCategoria
-                categorias={categorias}
-                abrirModalEdicion={abrirModalEdicion}
-                abrirModalEliminacion={abrirModalEliminacion}
-              />
-            </Col>
-          </Row>
+      )}
 
-          {/* Vista escritorio: Tabla */}
-          <Row className="d-none d-lg-block">
-            <Col lg={12}>
-              <TablaCategorias
-                categorias={categorias}
-                abrirModalEdicion={abrirModalEdicion}
-                abrirModalEliminacion={abrirModalEliminacion}
-              />
-            </Col>
-          </Row>
-        </>
+      {/* Lista de categorías filtradas */}
+      {!cargando && categoriasFiltradas.length > 0 && (
+        <Row>
+          <Col xs={12} sm={12} md={12} className="d-lg-none">
+            <TarjetaCategoria
+              categorias={categoriasPaginadas}
+              abrirModalEdicion={abrirModalEdicion}
+              abrirModalEliminacion={abrirModalEliminacion}
+            />
+          </Col>
+          <Col lg={12} className="d-none d-lg-block">
+            <TablaCategorias
+              categorias={categoriasPaginadas}
+              abrirModalEdicion={abrirModalEdicion}
+              abrirModalEliminacion={abrirModalEliminacion}
+            />
+          </Col>
+        </Row>
+      )}
+
+      {/* Paginación personalizada (si se desea usar en lugar de la de Bootstrap) */}
+      {!cargando && categoriasFiltradas.length > 0 && (
+        <Row className="mt-3">
+          <Col>
+            <Paginacion
+              registrosPorPagina={itemsPorPagina}
+              totalRegistros={categoriasFiltradas.length}
+              paginaActual={paginaActual}
+              establecerPaginaActual={setPaginaActual}
+              establecerRegistrosPorPagina={setItemsPorPagina}
+            />
+          </Col>
+        </Row>
       )}
 
       {/* Modal de Registro */}
