@@ -272,6 +272,10 @@ const eliminarCategoria = async () => {
     }
   };
 
+
+
+  
+
   return (
     <Container className="mt-3">
       {/* Título y botón Nueva Categoría */}
