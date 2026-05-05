@@ -5,6 +5,11 @@ import ModalRegistroProducto from "../components/productos/ModalRegistroProducto
 import NotificacionOperacion from "../components/NotificacionOperaciones";
 import CuadroBusquedas from "../components/busquedas/cuadroBusquedas";
 
+import ModalEdicionProducto from "../components/productos/ModalEdicionProducto";
+import ModalEliminacionProducto from "../components/productos/ModalEliminacionProducto";
+import TarjetasProductos from "../components/productos/TarjetasProductos";
+import TablaProductos from "../components/productos/TablaProductos";
+
 
 
 
@@ -15,6 +20,7 @@ const [productosFiltrados, setProductosFiltrados] = useState([]);
 const [categorias, setCategorias] = useState([]);
 const [textoBusqueda, setTextoBusqueda] = useState("");
 const [cargando, setCargando] = useState(true);
+const [vista, setVista] = useState("tarjetas"); // "tarjetas" o "tabla"
 
 const [mostrarModal, setMostrarModal] = useState(false);
 const [mostrarModalEliminacion, setMostrarModalEliminacion] = useState(false);
@@ -41,6 +47,23 @@ const [productoEditar, setProductoEditar] = useState({
 const [productoAEliminar, setProductoAEliminar] = useState(null);
 const [toast, setToast] = useState({ mostrar: false, mensaje: "", tipo: "" });
 
+const abrirModalEdicion = (producto) => {
+  setProductoEditar({
+    id_producto: producto.id_producto,
+    nombre_producto: producto.nombre_producto,
+    descripcion_producto: producto.descripcion_producto || "",
+    categoria_producto: producto.categoria_producto,
+    precio_venta: producto.precio_venta,
+    url_imagen: producto.url_imagen,
+    archivo: null,
+  });
+  setMostrarModalEdicion(true);
+};
+
+const abrirModalEliminacion = (producto) => {
+  setProductoAEliminar(producto);
+  setMostrarModalEliminacion(true);
+};
 
 const manejoCambioInput = (e) => {
   const { name, value } = e.target;
@@ -81,7 +104,31 @@ useEffect(() => {
 
 useEffect(() => {
   cargarCategorias();
+  cargarProductos();
 }, []);
+
+const cargarProductos = async () => {
+  try {
+    setCargando(true);
+    const { data, error } = await supabase
+      .from("productos")
+      .select(`
+        *,
+        categorias (
+          nombre_categoria
+        )
+      `)
+      .order("id_producto", { ascending: false });
+
+    if (error) throw error;
+    setProductos(data || []);
+    setProductosFiltrados(data || []);
+  } catch (err) {
+    console.error("Error al cargar productos:", err);
+  } finally {
+    setCargando(false);
+  }
+};
 
 const cargarCategorias = async () => {
   try {
@@ -141,6 +188,8 @@ const agregarProducto = async () => {
 
     if (error) throw error;
 
+    await cargarProductos();
+
     setNuevoProducto({
       nombre_producto: "",
       descripcion_producto: "",
@@ -164,7 +213,119 @@ const agregarProducto = async () => {
   }
 };
 
+const eliminarProducto = async () => {
+  try {
+    if (!productoAEliminar) return;
 
+    setMostrarModalEliminacion(false);
+
+    // Eliminar imagen de storage si existe
+    if (productoAEliminar.url_imagen) {
+      const nombreAnterior = productoAEliminar.url_imagen.split("/").pop().split("?")[0];
+      await supabase.storage.from("imagenes_productos").remove([nombreAnterior]).catch(() => {});
+    }
+
+    const { error } = await supabase
+      .from("productos")
+      .delete()
+      .eq("id_producto", productoAEliminar.id_producto);
+
+    if (error) throw error;
+
+    await cargarProductos();
+    setToast({ mostrar: true, mensaje: "Producto eliminado correctamente", tipo: "exito" });
+  } catch (err) {
+    console.error("Error al eliminar:", err);
+    setToast({ mostrar: true, mensaje: "Error al eliminar producto", tipo: "error" });
+  }
+};
+
+const manejoCambioInputEdicion = (e) => {
+  const { name, value } = e.target;
+  setProductoEditar((prev) => ({ ...prev, [name]: value }));
+};
+
+const manejoCambioArchivoActualizar = (e) => {
+  const archivo = e.target.files[0];
+  if (archivo && archivo.type.startsWith("image/")) {
+    setProductoEditar((prev) => ({ ...prev, archivo }));
+  } else {
+    alert("Selecciona una imagen válida (JPG, PNG, etc.)");
+  }
+};
+
+
+const actualizarProducto = async () => {
+  try {
+    if (
+      !productoEditar.nombre_producto.trim() ||
+      !productoEditar.categoria_producto ||
+      !productoEditar.precio_venta
+    ) {
+      setToast({
+        mostrar: true,
+        mensaje: "Completa los campos obligatorios",
+        tipo: "advertencia",
+      });
+      return;
+    }
+
+    setMostrarModalEdicion(false);
+
+    let datosActualizados = {
+      nombre_producto: productoEditar.nombre_producto,
+      descripcion_producto: productoEditar.descripcion_producto || null,
+      categoria_producto: productoEditar.categoria_producto,
+      precio_venta: parseFloat(productoEditar.precio_venta),
+      url_imagen: productoEditar.url_imagen,
+    };
+
+    if (productoEditar.archivo) {
+      const nombreArchivo = `${Date.now()}_${productoEditar.archivo.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("imagenes_productos")
+        .upload(nombreArchivo, productoEditar.archivo);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("imagenes_productos")
+        .getPublicUrl(nombreArchivo);
+
+      datosActualizados.url_imagen = urlData.publicUrl;
+
+      if (productoEditar.url_imagen) {
+        const nombreAnterior = productoEditar.url_imagen.split("/").pop().split("?")[0];
+        await supabase.storage.from("imagenes_productos").remove([nombreAnterior]).catch(() => {});
+      }
+    }
+
+    const { error } = await supabase
+      .from("productos")
+      .update(datosActualizados)
+      .eq("id_producto", productoEditar.id_producto);
+
+    if (error) throw error;
+
+    await cargarProductos();
+
+    setProductoEditar({
+      id_producto: "",
+      nombre_producto: "",
+      descripcion_producto: "",
+      categoria_producto: "",
+      precio_venta: "",
+      url_imagen: "",
+      archivo: null,
+    });
+
+    setToast({ mostrar: true, mensaje: "Producto actualizado correctamente", tipo: "exito" });
+  } catch (err) {
+    console.error("Error al actualizar:", err);
+    setToast({ mostrar: true, mensaje: "Error al actualizar producto", tipo: "error" });
+  }
+};
 
   return (
    <Container className="mt-3">
@@ -193,6 +354,54 @@ const agregarProducto = async () => {
         placeholder="Buscar por nombre, descripción o precio..."
       />
     </Col>
+    <Col md={6} lg={7} className="text-end">
+      <div className="btn-group" role="group">
+        <Button
+          variant={vista === "tarjetas" ? "primary" : "outline-primary"}
+          onClick={() => setVista("tarjetas")}
+        >
+          <i className="bi bi-grid-3x3-gap"></i>
+        </Button>
+        <Button
+          variant={vista === "tabla" ? "primary" : "outline-primary"}
+          onClick={() => setVista("tabla")}
+        >
+          <i className="bi bi-list-task"></i>
+        </Button>
+      </div>
+    </Col>
+  </Row>
+
+  <Row>
+    <Col xs={12} md={12} lg={12}>
+      {/* Spinner de carga de productos */}
+      {cargando && (
+        <div className="text-center my-5">
+          <Spinner animation="border" variant="success" size="lg" />
+          <p className="mt-3 text-muted">Cargando productos...</p>
+        </div>
+      )}
+
+      {/* Tarjetas con productos cargados */}
+      {!cargando && productosFiltrados.length > 0 && vista === "tarjetas" && (
+        <TarjetasProductos
+          productos={productosFiltrados}
+          categorias={categorias}
+          abrirModalEdicion={abrirModalEdicion}
+          abrirModalEliminacion={abrirModalEliminacion}
+        />
+      )}
+
+      {/* Tabla con productos cargados */}
+      {!cargando && productosFiltrados.length > 0 && vista === "tabla" && (
+        <TablaProductos
+          productos={productosFiltrados}
+          categorias={categorias}
+          abrirModalEdicion={abrirModalEdicion}
+          abrirModalEliminacion={abrirModalEliminacion}
+        />
+      )}
+    </Col>
   </Row>
 
   {/* Modales */}
@@ -205,6 +414,23 @@ const agregarProducto = async () => {
     manejoCambioArchivo={manejoCambioArchivo}
     agregarProducto={agregarProducto}
     categorias={categorias}
+  />
+
+<ModalEdicionProducto
+    mostrarModalEdicion={mostrarModalEdicion}
+    setMostrarModalEdicion={setMostrarModalEdicion}
+    productoEditar={productoEditar}
+    manejoCambioInputEdicion={manejoCambioInputEdicion}
+    manejoCambioArchivoActualizar={manejoCambioArchivoActualizar}
+    actualizarProducto={actualizarProducto}
+    categorias={categorias}
+  />
+
+  <ModalEliminacionProducto
+    mostrarModalEliminacion={mostrarModalEliminacion}
+    setMostrarModalEliminacion={setMostrarModalEliminacion}
+    eliminarProducto={eliminarProducto}
+    producto={productoAEliminar}
   />
 
   <NotificacionOperacion
