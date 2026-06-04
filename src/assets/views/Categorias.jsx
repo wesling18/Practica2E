@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Button, Spinner, Alert, Pagination } from "react-bootstrap";
 import { supabase } from "../database/supabaseconfig";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import ModalRegistroCategoria from "../components/categorias/ModalResgistroCategoria";
 import NotificacionOperacion from "../components/NotificacionOperaciones";
@@ -53,6 +55,33 @@ const Categorias = () => {
   const abrirModalEliminacion = (categoria) => {
     setCategoriaAEliminar(categoria);
     setMostrarModalEliminacion(true);
+  };
+
+  const generarPDFCategoria = (categoria) => {
+    const doc = new jsPDF();
+
+    // Título
+    doc.setFontSize(18);
+    doc.text("Reporte de Categoría", 14, 20);
+
+    // Línea decorativa
+    doc.line(14, 25, 195, 25);
+
+    // Información de la categoría
+    doc.setFontSize(12);
+
+    autoTable(doc, {
+      startY: 35,
+      head: [["Campo", "Valor"]],
+      body: [
+        ["ID", categoria.id_categoria],
+        ["Nombre", categoria.nombre_categoria],
+        ["Descripción", categoria.descripcion_categoria],
+      ],
+    });
+
+    // Descargar PDF
+    doc.save(`categoria_${categoria.id_categoria}.pdf`);
   };
 
   const cargarCategorias = async () => {
@@ -359,6 +388,7 @@ const eliminarCategoria = async () => {
               categorias={categoriasPaginadas}
               abrirModalEdicion={abrirModalEdicion}
               abrirModalEliminacion={abrirModalEliminacion}
+              generarPDFCategoria={generarPDFCategoria}
             />
           </Col>
           <Col lg={12} className="d-none d-lg-block">
@@ -366,6 +396,7 @@ const eliminarCategoria = async () => {
               categorias={categoriasPaginadas}
               abrirModalEdicion={abrirModalEdicion}
               abrirModalEliminacion={abrirModalEliminacion}
+              generarPDFCategoria={generarPDFCategoria}
             />
           </Col>
         </Row>
