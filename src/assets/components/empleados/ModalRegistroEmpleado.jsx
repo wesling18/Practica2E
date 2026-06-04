@@ -78,14 +78,17 @@ const ModalRegistroEmpleado = ({
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Tipo de Empleado</Form.Label>
-            <Form.Control
-              type="text"
+            <Form.Select
               name="tipo_empleado"
               value={nuevoEmpleado.tipo_empleado}
               onChange={manejoCambioInput}
-              placeholder="Ej. Administrador, Vendedor, Cajero"
               required
-            />
+            >
+              <option value="">Selecciona un tipo...</option>
+              <option value="administrador">Administrador</option>
+              <option value="cajero">Cajero</option>
+              <option value="mesero">Mesero</option>
+            </Form.Select>
           </Form.Group>
         </Form>
       </Modal.Body>
