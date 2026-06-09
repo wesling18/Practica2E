@@ -9,6 +9,7 @@ import Empleados from "./assets/views/Empleados";
 import Clientes from "./assets/views/Clientes";
 import Login from "./assets/views/Login";
 import Permisos from "./assets/views/Permisos";
+import Ventas from "./assets/views/Ventas";
 
 import RutaProtegida from "./assets/components/rutas/RutaProtegida";
 import Pagina404 from "./assets/views/Pagina404";
@@ -33,6 +34,7 @@ const App = () => {
           <Route path="/empleados" element={<RutaProtegida><Empleados /></RutaProtegida>} />
           <Route path="/clientes" element={<RutaProtegida><Clientes /></RutaProtegida>} />
           <Route path="/permisos" element={<RutaProtegida><Permisos /></RutaProtegida>} />
+          <Route path="/ventas" element={<RutaProtegida><Ventas /></RutaProtegida>} />
           <Route path="/catalogo" element={<Catalogo />} />
 
           <Route path="*" element={<Pagina404 />} />

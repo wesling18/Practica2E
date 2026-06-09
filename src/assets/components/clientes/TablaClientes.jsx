@@ -10,11 +10,7 @@ const TablaClientes = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (clientes && clientes.length > 0) {
-      setLoading(false);
-    } else {
-      setLoading(true);
-    }
+    setLoading(!(clientes && clientes.length > 0));
   }, [clientes]);
 
   return (
@@ -36,11 +32,11 @@ const TablaClientes = ({
             </tr>
           </thead>
           <tbody>
-            {clientes.map((cliente, index) => (
+            {clientes.map((cliente) => (
               <tr key={cliente.id_cliente}>
-                <td>{index + 1}</td>
-                <td>{cliente.nombre}</td>
-                <td>{cliente.apellido}</td>
+                <td>{cliente.id_cliente}</td>
+                <td>{cliente.nombre_cliente}</td>
+                <td>{cliente.apellido_cliente || "—"}</td>
                 <td>{cliente.celular}</td>
                 <td className="text-center">
                   <Button
@@ -51,7 +47,6 @@ const TablaClientes = ({
                   >
                     <i className="bi bi-pencil"></i>
                   </Button>
-
                   <Button
                     variant="outline-danger"
                     size="sm"

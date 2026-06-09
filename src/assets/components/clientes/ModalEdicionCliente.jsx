@@ -11,25 +11,11 @@ const ModalEdicionCliente = ({
   const [deshabilitado, setDeshabilitado] = useState(false);
 
   const handleActualizar = async () => {
-    if (
-      clienteEditar.nombre.trim() === "" ||
-      clienteEditar.apellido.trim() === "" ||
-      clienteEditar.celular.trim() === ""
-    ) {
-      return;
-    }
+    if (deshabilitado) return;
     setDeshabilitado(true);
     await actualizarCliente();
     setDeshabilitado(false);
   };
-
-  const esInvalido =
-    !clienteEditar.nombre ||
-    clienteEditar.nombre.trim() === "" ||
-    !clienteEditar.apellido ||
-    clienteEditar.apellido.trim() === "" ||
-    !clienteEditar.celular ||
-    clienteEditar.celular.trim() === "";
 
   return (
     <Modal
@@ -45,36 +31,32 @@ const ModalEdicionCliente = ({
       <Modal.Body>
         <Form>
           <Form.Group className="mb-3">
-            <Form.Label>Nombre</Form.Label>
+            <Form.Label>Nombre *</Form.Label>
             <Form.Control
               type="text"
-              name="nombre"
-              value={clienteEditar.nombre || ""}
+              name="nombre_cliente"
+              value={clienteEditar.nombre_cliente}
               onChange={manejoCambioInputEdicion}
-              placeholder="Ingresa el nombre"
-              required
             />
           </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>Apellido</Form.Label>
             <Form.Control
               type="text"
-              name="apellido"
-              value={clienteEditar.apellido || ""}
+              name="apellido_cliente"
+              value={clienteEditar.apellido_cliente}
               onChange={manejoCambioInputEdicion}
-              placeholder="Ingresa el apellido"
-              required
             />
           </Form.Group>
+
           <Form.Group className="mb-3">
-            <Form.Label>Celular</Form.Label>
+            <Form.Label>Celular *</Form.Label>
             <Form.Control
-              type="text"
+              type="tel"
               name="celular"
-              value={clienteEditar.celular || ""}
+              value={clienteEditar.celular}
               onChange={manejoCambioInputEdicion}
-              placeholder="Ingresa el celular"
-              required
             />
           </Form.Group>
         </Form>
@@ -86,9 +68,9 @@ const ModalEdicionCliente = ({
         <Button
           variant="primary"
           onClick={handleActualizar}
-          disabled={esInvalido || deshabilitado}
+          disabled={!clienteEditar.nombre_cliente?.trim() || !clienteEditar.celular?.trim() || deshabilitado}
         >
-          Actualizar
+          Actualizar Cliente
         </Button>
       </Modal.Footer>
     </Modal>

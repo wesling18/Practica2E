@@ -11,22 +11,11 @@ const ModalRegistroCliente = ({
   const [deshabilitado, setDeshabilitado] = useState(false);
 
   const handleRegistrar = async () => {
-    if (
-      nuevoCliente.nombre.trim() === "" ||
-      nuevoCliente.apellido.trim() === "" ||
-      nuevoCliente.celular.trim() === ""
-    ) {
-      return;
-    }
+    if (deshabilitado) return;
     setDeshabilitado(true);
     await agregarCliente();
     setDeshabilitado(false);
   };
-
-  const esInvalido =
-    nuevoCliente.nombre.trim() === "" ||
-    nuevoCliente.apellido.trim() === "" ||
-    nuevoCliente.celular.trim() === "";
 
   return (
     <Modal
@@ -37,41 +26,40 @@ const ModalRegistroCliente = ({
       centered
     >
       <Modal.Header closeButton>
-        <Modal.Title>Agregar Cliente</Modal.Title>
+        <Modal.Title>Agregar Nuevo Cliente</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>
           <Form.Group className="mb-3">
-            <Form.Label>Nombre</Form.Label>
+            <Form.Label>Nombre *</Form.Label>
             <Form.Control
               type="text"
-              name="nombre"
-              value={nuevoCliente.nombre}
+              name="nombre_cliente"
+              value={nuevoCliente.nombre_cliente}
               onChange={manejoCambioInput}
               placeholder="Ingresa el nombre"
-              required
             />
           </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>Apellido</Form.Label>
             <Form.Control
               type="text"
-              name="apellido"
-              value={nuevoCliente.apellido}
+              name="apellido_cliente"
+              value={nuevoCliente.apellido_cliente}
               onChange={manejoCambioInput}
               placeholder="Ingresa el apellido"
-              required
             />
           </Form.Group>
+
           <Form.Group className="mb-3">
-            <Form.Label>Celular</Form.Label>
+            <Form.Label>Celular *</Form.Label>
             <Form.Control
-              type="text"
+              type="tel"
               name="celular"
               value={nuevoCliente.celular}
               onChange={manejoCambioInput}
-              placeholder="Ingresa el celular (ej. 77777777)"
-              required
+              placeholder="Ej: 505 1234 5678"
             />
           </Form.Group>
         </Form>
@@ -83,9 +71,9 @@ const ModalRegistroCliente = ({
         <Button
           variant="primary"
           onClick={handleRegistrar}
-          disabled={esInvalido || deshabilitado}
+          disabled={!nuevoCliente.nombre_cliente.trim() || !nuevoCliente.celular.trim() || deshabilitado}
         >
-          Guardar
+          Guardar Cliente
         </Button>
       </Modal.Footer>
     </Modal>
