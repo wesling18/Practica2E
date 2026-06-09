@@ -48,13 +48,13 @@ const FormularioVenta = ({
     return new Promise((resolve) => {
       const filtrados = empleados
         .filter(emp => 
-          `${emp.nombre_empleado} ${emp.apellido_empleado}`
+          `${emp.nombre} ${emp.apellido}`
             .toLowerCase()
             .includes(inputValue.toLowerCase())
         )
         .map(emp => ({
           value: emp.id_empleado,
-          label: `${emp.nombre_empleado} ${emp.apellido_empleado}`,
+          label: `${emp.nombre} ${emp.apellido}`,
           data: emp
         }));
       resolve(filtrados);
@@ -123,7 +123,7 @@ const FormularioVenta = ({
                 onChange={(option) => setEmpleadoSeleccionado(option?.data || null)}
                 value={empleadoSeleccionado ? {
                   value: empleadoSeleccionado.id_empleado,
-                  label: `${empleadoSeleccionado.nombre_empleado} ${empleadoSeleccionado.apellido_empleado}`
+                  label: `${empleadoSeleccionado.nombre} ${empleadoSeleccionado.apellido}`
                 } : null}
                 placeholder="Buscar empleado..."
                 isClearable

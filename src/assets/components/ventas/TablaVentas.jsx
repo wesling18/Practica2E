@@ -24,7 +24,7 @@ const TablaVentas = ({ ventas, abrirEdicion }) => {
               {venta.clientes?.nombre_cliente} {venta.clientes?.apellido_cliente}
             </td>
             <td>
-              {venta.empleados?.nombre_empleado} {venta.empleados?.apellido_empleado}
+              {venta.empleados?.nombre} {venta.empleados?.apellido}
             </td>
             <td>
               <span className="badge bg-info">{venta.metodo_pago}</span>

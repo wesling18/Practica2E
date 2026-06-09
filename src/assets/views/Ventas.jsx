@@ -59,7 +59,7 @@ const Ventas = () => {
         .select(`
           *,
           clientes (nombre_cliente, apellido_cliente),
-          empleados (nombre_empleado, apellido_empleado),
+          empleados (nombre, apellido),
           detalles_ventas (*, productos (nombre_producto))
         `)
         .order("fecha_venta", { ascending: false });
@@ -121,7 +121,8 @@ const Ventas = () => {
       const textoLower = textoBusqueda.toLowerCase();
       const filtradas = ventas.filter(v =>
         `${v.clientes?.nombre_cliente || ''} ${v.clientes?.apellido_cliente || ''}`.toLowerCase().includes(textoLower) ||
-        v.empleados?.nombre_empleado?.toLowerCase().includes(textoLower)
+        v.empleados?.nombre?.toLowerCase().includes(textoLower) ||
+        v.empleados?.apellido?.toLowerCase().includes(textoLower)
       );
       setVentasFiltradas(filtradas);
     }
