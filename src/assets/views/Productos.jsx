@@ -7,6 +7,7 @@ import CuadroBusquedas from "../components/busquedas/cuadroBusquedas";
 
 import ModalEdicionProducto from "../components/productos/ModalEdicionProducto";
 import ModalEliminacionProducto from "../components/productos/ModalEliminacionProducto";
+import ModalQRProducto from "../components/productos/ModalQRProducto";
 import TarjetasProductos from "../components/productos/TarjetasProductos";
 import TablaProductos from "../components/productos/TablaProductos";
 
@@ -46,6 +47,22 @@ const [productoEditar, setProductoEditar] = useState({
 
 const [productoAEliminar, setProductoAEliminar] = useState(null);
 const [toast, setToast] = useState({ mostrar: false, mensaje: "", tipo: "" });
+
+const [mostrarModalQR, setMostrarModalQR] = useState(false);
+const [productoQR, setProductoQR] = useState(null);
+
+const generarQRImagen = (producto) => {
+  if (!producto?.url_imagen) {
+    setToast({
+      mostrar: true,
+      mensaje: "Este producto no tiene imagen asociada",
+      tipo: "advertencia",
+    });
+    return;
+  }
+  setProductoQR(producto);
+  setMostrarModalQR(true);
+};
 
 const abrirModalEdicion = (producto) => {
   setProductoEditar({
@@ -389,6 +406,7 @@ const actualizarProducto = async () => {
           categorias={categorias}
           abrirModalEdicion={abrirModalEdicion}
           abrirModalEliminacion={abrirModalEliminacion}
+          generarQRImagen={generarQRImagen}
         />
       )}
 
@@ -399,6 +417,7 @@ const actualizarProducto = async () => {
           categorias={categorias}
           abrirModalEdicion={abrirModalEdicion}
           abrirModalEliminacion={abrirModalEliminacion}
+          generarQRImagen={generarQRImagen}
         />
       )}
     </Col>
@@ -431,6 +450,12 @@ const actualizarProducto = async () => {
     setMostrarModalEliminacion={setMostrarModalEliminacion}
     eliminarProducto={eliminarProducto}
     producto={productoAEliminar}
+  />
+
+  <ModalQRProducto
+    mostrar={mostrarModalQR}
+    onHide={() => setMostrarModalQR(false)}
+    producto={productoQR}
   />
 
   <NotificacionOperacion

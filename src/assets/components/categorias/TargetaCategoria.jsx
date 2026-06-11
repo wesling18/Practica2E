@@ -7,6 +7,7 @@ const TarjetaCategoria = ({
   abrirModalEdicion,
   abrirModalEliminacion,
   generarPDFCategoria,
+  copiarCategoria,
 }) => {
   const [cargando, setCargando] = useState(true);
   const [idTarjetaActiva, setIdTarjetaActiva] = useState(null);
@@ -134,6 +135,19 @@ const TarjetaCategoria = ({
                         aria-label={`Generar PDF para ${categoria.nombre_categoria}`}
                       >
                         <i className="bi bi-file-earmark-pdf"></i>
+                      </Button>
+
+                      <Button
+                        variant="outline-success"
+                        size="sm"
+                        onClick={() => {
+                          copiarCategoria(categoria);
+                          setIdTarjetaActiva(null);
+                        }}
+                        title="Copiar al portapapeles"
+                        aria-label={`Copiar ${categoria.nombre_categoria}`}
+                      >
+                        <i className="bi bi-clipboard"></i>
                       </Button>
                     </div>
                   </div>
